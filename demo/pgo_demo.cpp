@@ -8,6 +8,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <iomanip>
+#include <pcl/common/transforms.h>
 
 // Read KITTI data
 std::vector<float> read_lidar_data(const std::string lidar_data_path) {
@@ -34,7 +36,7 @@ int main(int argc, char **argv) {
   ros::NodeHandle nh;
   std::string lidar_path = "";
   std::string pose_path = "";
-  nh.param<std::string>("lidar_path", lidar_path, "");
+  nh.param<std::string>("lidar_path", lidar_path, "/home/map/pose_graph/");
   nh.param<std::string>("pose_path", pose_path, "");
 
   ConfigSetting config_setting;
@@ -58,7 +60,7 @@ int main(int argc, char **argv) {
   ros::Publisher pubOdomCorreted =
       nh.advertise<nav_msgs::Odometry>("/odom_corrected", 10);
 
-  ros::Rate loop(500);
+  ros::Rate loop(50);
   ros::Rate slow_loop(100);
   std::vector<std::pair<Eigen::Vector3d, Eigen::Matrix3d>> poses_vec;
   std::vector<std::pair<Eigen::Vector3d, Eigen::Matrix3d>> key_poses_vec;
@@ -94,7 +96,9 @@ int main(int argc, char **argv) {
   std::vector<double> querying_time;
   std::vector<double> update_time;
   int triggle_loop_num = 0;
-  while (ros::ok()) {
+  while (ros::ok() & cloudInd < poses_vec.size() ) 
+  {    
+    /*
     std::stringstream lidar_data_path;
     lidar_data_path << lidar_path << std::setfill('0') << std::setw(6)
                     << cloudInd << ".bin";
@@ -118,9 +122,60 @@ int main(int argc, char **argv) {
       point.intensity = lidar_data[i + 3];
       current_cloud->push_back(point);
     }
-    down_sampling_voxel(*current_cloud, config_setting.ds_size_);
-    cloud_vec.push_back(current_cloud);
-    for (auto pv : current_cloud->points) {
+    */
+    
+    Eigen::Vector3d translation = poses_vec[cloudInd].first;
+    Eigen::Matrix3d rotation = poses_vec[cloudInd].second;
+
+
+    pcl::PointCloud<pcl::PointXYZI>::Ptr current_cloud(
+        new pcl::PointCloud<pcl::PointXYZI>());
+    std::stringstream lidar_data_path;
+    lidar_data_path << lidar_path << std::setfill('0') << std::setw(6)
+                    << cloudInd << "/cloud.pcd";
+    // std::cout << "lidar_data_path:" << lidar_data_path.str() << std::endl;
+
+    if (pcl::io::loadPCDFile<pcl::PointXYZI>(lidar_data_path.str(), *current_cloud) == -1)
+    {
+      PCL_ERROR("Couldn't read file room_scan1.pcd \n");
+      return (-1);
+    }
+
+    // Eigen::Matrix4d transform;
+    // transform.block<1, 3>(0, 3) = translation;
+    // transform.block<3, 3>(0, 0) = rotation;
+			
+    //   Eigen::Isometry3d TM = Eigen::Isometry3d::Identity();
+		// 	TM.rotate(rotation);
+		// 	TM.pretranslate(translation);
+      pcl::PointCloud<pcl::PointXYZI>::Ptr tt_current_cloud(
+        new pcl::PointCloud<pcl::PointXYZI>());
+
+    // // ROS_WARN("current_cloud %d:",current_cloud->points.size());
+		// pcl::transformPointCloud(*current_cloud, *tt_current_cloud, TM.matrix());
+    // ROS_WARN("tt_current_cloud %d:",tt_current_cloud->points.size());
+    for (const auto pt : current_cloud->points) {
+      Eigen::Vector3d pv(pt.x, pt.y, pt.z );
+      pv = rotation * pv + translation;
+      pcl::PointXYZI point;
+      point = vec2point(pv);
+      point.intensity = 0;
+      tt_current_cloud->push_back(point);
+    }
+    //   sensor_msgs::PointCloud2 pub_cloud;
+    //   pcl::toROSMsg(*tt_current_cloud, pub_cloud);
+    //   pub_cloud.header.frame_id = "camera_init";
+    //   pubCureentCloud.publish(pub_cloud);
+
+
+    // cloudInd++;
+    // continue;
+
+
+    down_sampling_voxel(*tt_current_cloud, config_setting.ds_size_);
+    cloud_vec.push_back(tt_current_cloud);
+    temp_cloud->points.clear();
+    for (auto pv : tt_current_cloud->points) {
       temp_cloud->points.push_back(pv);
     }
 
@@ -129,8 +184,8 @@ int main(int argc, char **argv) {
       // use first frame's pose as key pose
       key_poses_vec.push_back(
           poses_vec[cloudInd - config_setting.sub_frame_num_]);
-      std::cout << "Key Frame id:" << keyCloudInd
-                << ", cloud size: " << temp_cloud->size() << std::endl;
+      // std::cout << "Key Frame id:" << keyCloudInd
+      //           << ", cloud size: " << temp_cloud->size() << std::endl;
       // step1. Descriptor Extraction
       auto t_descriptor_begin = std::chrono::high_resolution_clock::now();
       std::vector<STDesc> stds_vec;
@@ -252,7 +307,9 @@ int main(int argc, char **argv) {
         pubMatchedCorner.publish(pub_cloud);
         publish_std_pairs(loop_std_pair, pubSTD);
 
-      } else {
+      }
+      else
+      {
         // add connection between near frame
         initial.insert(cloudInd,
                        gtsam::Pose3(gtsam::Rot3(poses_vec[cloudInd].second),
@@ -320,6 +377,7 @@ int main(int argc, char **argv) {
     loop.sleep();
     cloudInd++;
   }
+  
   double mean_descriptor_time =
       std::accumulate(descriptor_time.begin(), descriptor_time.end(), 0) * 1.0 /
       descriptor_time.size();

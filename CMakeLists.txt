@@ -43,6 +43,7 @@ find_package(OpenMP QUIET)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}   ${OpenMP_C_FLAGS}")
 find_package(PCL REQUIRED)
+set(Ceres_DIR "/root/source_src/ceres-solver-2.1.0/ceres-bin")
 find_package(Ceres REQUIRED)
 find_package(GTSAM REQUIRED QUIET)
 
@@ -61,19 +62,19 @@ include_directories(
   ${OpenCV_INCLUDE_DIRS}
 )
 
-add_executable(place_recognition_kitti demo/place_recognition_kitti.cpp src/STDesc.cpp )
-target_link_libraries(place_recognition_kitti 
-        ${catkin_LIBRARIES} 
-        ${PCL_LIBRARIES} 
-        ${OpenCV_LIBS} 
-        ${CERES_LIBRARIES})
+# add_executable(place_recognition_kitti demo/place_recognition_kitti.cpp src/STDesc.cpp )
+# target_link_libraries(place_recognition_kitti 
+#         ${catkin_LIBRARIES} 
+#         ${PCL_LIBRARIES} 
+#         ${OpenCV_LIBS} 
+#         ${CERES_LIBRARIES})
 
-add_executable(place_recognition_livox demo/place_recognition_livox.cpp src/STDesc.cpp )
-target_link_libraries(place_recognition_livox 
-        ${catkin_LIBRARIES} 
-        ${PCL_LIBRARIES} 
-        ${OpenCV_LIBS} 
-        ${CERES_LIBRARIES})
+# add_executable(place_recognition_livox demo/place_recognition_livox.cpp src/STDesc.cpp )
+# target_link_libraries(place_recognition_livox 
+#         ${catkin_LIBRARIES} 
+#         ${PCL_LIBRARIES} 
+#         ${OpenCV_LIBS} 
+#         ${CERES_LIBRARIES})
 
 add_executable(pgo_demo demo/pgo_demo.cpp src/STDesc.cpp )
 target_link_libraries(pgo_demo 
