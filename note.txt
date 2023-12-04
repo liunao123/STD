@@ -1,0 +1,12 @@
+ubuntu18 上编译记录：
+
+1、安装ceres，在cmake的时候，指定一个安装路径，不要在系统路径下。
+
+2、cmake -D CMAKE_INSTALL_PREFIX=/opt/csg/slam/navs/src/STD/ceres-solver-2.1.0/ceres_install_path  ..
+   make
+   make install
+
+3、在 CMakeLists.txt 里面指定上述路径的文件夹
+   set(Ceres_DIR "/opt/csg/slam/navs/src/STD/ceres-solver-2.1.0/ceres_install_path/lib/cmake/Ceres")
+
+4、catkin_make

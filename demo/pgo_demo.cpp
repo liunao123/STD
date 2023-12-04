@@ -97,43 +97,16 @@ int main(int argc, char **argv) {
   std::vector<double> update_time;
   int triggle_loop_num = 0;
   while (ros::ok() & cloudInd < poses_vec.size() ) 
-  {    
-    /*
-    std::stringstream lidar_data_path;
-    lidar_data_path << lidar_path << std::setfill('0') << std::setw(6)
-                    << cloudInd << ".bin";
-    std::vector<float> lidar_data = read_lidar_data(lidar_data_path.str());
-    if (lidar_data.size() == 0) {
-      break;
-    }
-    pcl::PointCloud<pcl::PointXYZI>::Ptr current_cloud(
-        new pcl::PointCloud<pcl::PointXYZI>());
+  {   
     Eigen::Vector3d translation = poses_vec[cloudInd].first;
     Eigen::Matrix3d rotation = poses_vec[cloudInd].second;
-    for (std::size_t i = 0; i < lidar_data.size(); i += 4) {
-      pcl::PointXYZI point;
-      point.x = lidar_data[i];
-      point.y = lidar_data[i + 1];
-      point.z = lidar_data[i + 2];
-      point.intensity = lidar_data[i + 3];
-      Eigen::Vector3d pv = point2vec(point);
-      pv = rotation * pv + translation;
-      point = vec2point(pv);
-      point.intensity = lidar_data[i + 3];
-      current_cloud->push_back(point);
-    }
-    */
-    
-    Eigen::Vector3d translation = poses_vec[cloudInd].first;
-    Eigen::Matrix3d rotation = poses_vec[cloudInd].second;
-
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr current_cloud(
         new pcl::PointCloud<pcl::PointXYZI>());
     std::stringstream lidar_data_path;
     lidar_data_path << lidar_path << std::setfill('0') << std::setw(6)
                     << cloudInd << "/cloud.pcd";
-    // std::cout << "lidar_data_path:" << lidar_data_path.str() << std::endl;
+    std::cout << "lidar_data_path:" << lidar_data_path.str() << std::endl;
 
     if (pcl::io::loadPCDFile<pcl::PointXYZI>(lidar_data_path.str(), *current_cloud) == -1)
     {
